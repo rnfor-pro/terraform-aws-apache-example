@@ -1,6 +1,6 @@
 Terraform Modules To Provision an EC2 that is running Apache.
 
-Not intended for production use, just showcasing how to create a custom module on terraform registry.
+Not intended for production use, just showcasing how to create a custom module on terraform registry...
 
 ```hcl
 terraform {
