@@ -1,6 +1,21 @@
+
 data "aws_vpc" "main" {
   id = var.vpc_id
 }
+
+data "aws_subnets" "example" {
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id]
+  }  
+}
+
+data "aws_subnet" "example" {
+  for_each = toset(data.aws_subnets.example.ids)
+  id       = each.value
+}
+
+
 
 resource "aws_security_group" "sg_app_server" {
   name        = "sg_app_server"
@@ -13,7 +28,7 @@ resource "aws_security_group" "sg_app_server" {
     from_port        = 80
     to_port          = 80
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = "${values(data.aws_subnet.example).*.cidr_block}"  #["0.0.0.0/0"]
     ipv6_cidr_blocks = []
     prefix_list_ids = []
     security_groups = []
@@ -24,7 +39,7 @@ resource "aws_security_group" "sg_app_server" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = [var.my_ip_with_cidr]
+    cidr_blocks      = "${values(data.aws_subnet.example).*.cidr_block}" # [var.my_ip_with_cidr]
     ipv6_cidr_blocks = []
     prefix_list_ids = []
     security_groups = []
@@ -37,7 +52,7 @@ resource "aws_security_group" "sg_app_server" {
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = "${values(data.aws_subnet.example).*.cidr_block}"  # ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
     prefix_list_ids = []
     security_groups = []
@@ -72,6 +87,10 @@ data "aws_ami" "amazon-linux-2" {
 
 resource "aws_instance" "app_server" {
   ami           = "${data.aws_ami.amazon-linux-2.id}"
+  # for_each = tolist(data.aws_subnet.subnet_id.id)[0]
+  # subnet_id = data.aws_subnet.subnet_id[each.key]
+  for_each      = toset(data.aws_subnets.example.ids)
+  subnet_id     = each.value
   instance_type = var.instance_type
   key_name = "${aws_key_pair.deployer.key_name}"
   vpc_security_group_ids = [aws_security_group.sg_app_server.id]

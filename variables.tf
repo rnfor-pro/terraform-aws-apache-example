@@ -3,6 +3,7 @@ variable "vpc_id" {
   description = "The ID of our vpc"
 }
 
+
 variable "my_ip_with_cidr" {
   type = string
   description = "My IP ith cidr e.g 50.77.81.125/32"
@@ -26,3 +27,4 @@ variable "server_name" {
     default = "Apache Server"
   
 }
+
